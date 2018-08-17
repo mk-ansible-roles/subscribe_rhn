@@ -5,6 +5,10 @@
   register: subscription_status
   changed_when: false
 
+- name: Check for Atomic Host
+  stat: path=/run/ostree-booted
+  register: atomic_host
+
 - name: make sure registration credentials are provided
   fail:
     msg: "please provide registration credentials for this system"
@@ -15,7 +19,17 @@
     name: "{{ 'https://' +  satellite_server +'/pub/katello-ca-consumer-latest.noarch.rpm' }}"
     state: present
     validate_certs: no
-  when: not( (satellite_server is undefined) or (satellite_server is none) or (satellite_server | trim == '') )
+  when: not( (satellite_server is undefined) or (satellite_server is none) or (satellite_server | trim == '') ) and not(atomic_host.stat.exists)
+- name: Download katello configurator for Atomic
+  get_url:
+    url: "{{ 'https://' +  satellite_server +'/pub/katello-rhsm-consumer' }}"
+    dest: /tmp/katello-rhsm-consumer
+    mode: 0755
+    validate_certs: no
+  when: atomic_host.stat.exists
+- name: Apply katello-rhsm-consumer for Atomic
+  shell: '/tmp/katello-rhsm-consumer'
+  when: atomic_host.stat.exists
 
 - name: ensure system is registered using known activation key
   redhat_subscription:
@@ -46,24 +60,24 @@
   when: repo_reset
 
 - name: Set fix osrelease to "{{ reg_osrelease }}"
-  shell: | 
+  shell: |
     if [ "$( LANG=C subscription-manager release | cut -d' ' -f2 )" != "{{ reg_osrelease }}" ]; then
           yum clean all
-          subscription-manager release --set={{ reg_osrelease }} 
+          subscription-manager release --set={{ reg_osrelease }}
           yum clean all
           # workaround to update redhat.repo appropriately
-          subscription-manager repos --list 
-    else 
+          subscription-manager repos --list
+    else
           exit 90
-    fi 
+    fi
   register: rh_release
   changed_when: rh_release.rc == 0
   failed_when: rh_release.rc > 0 and rh_release.rc !=90
   when: not( (reg_osrelease is undefined) or (reg_osrelease is none) or (reg_osrelease | trim == '') )
-  
+
 # TODO: Change functionality to use yum module
 - name: check repositories system has access to
-  shell: yum repolist warn=no
+  shell: subscription-manager repos --list-enabled
   register: repolist
   changed_when: false
 
