@@ -4,6 +4,7 @@
   shell: LANG=C subscription-manager list | awk  ' ( $1 == "Status:" ) { print $2 } ' | sort -u
   register: subscription_status
   changed_when: false
+  check_mode: no
 
 - name: make sure registration credentials are provided
   fail:
