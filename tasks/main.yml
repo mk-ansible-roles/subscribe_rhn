@@ -4,6 +4,7 @@
   shell: LANG=C subscription-manager list | awk  ' ( $1 == "Status:" ) { print $2 } ' | sort -u
   register: subscription_status
   changed_when: false
+  check_mode: no
 
 - name: make sure registration credentials are provided
   fail:
@@ -19,6 +20,7 @@
 
 - name: ensure system is registered using known activation key
   redhat_subscription:
+    force_register: "{{ reg_force_register | default('no') }}"
     activationkey: "{{ reg_activation_key | default(omit) }}"
     org_id: "{{ reg_organization_id | default(omit) }}"
     pool: "{{ reg_pool | default(omit) }}"
@@ -32,7 +34,7 @@
     server_proxy_user: "{{ reg_server_proxy_user | default(omit) }}"
     server_proxy_password: "{{ reg_server_proxy_password | default(omit) }}"
     state: present
-  when: ( subscription_status.stdout != "Subscribed" )
+#  when: ( subscription_status.stdout != "Subscribed" )
 
 - name: Set fix osrelease to "{{ reg_osrelease }}"
   shell: |
