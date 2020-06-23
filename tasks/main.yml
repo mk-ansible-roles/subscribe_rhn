@@ -20,6 +20,7 @@
 
 - name: ensure system is registered using known activation key
   redhat_subscription:
+    force_register: "{{ reg_force_register | default('no') }}"
     activationkey: "{{ reg_activation_key | default(omit) }}"
     org_id: "{{ reg_organization_id | default(omit) }}"
     pool: "{{ reg_pool | default(omit) }}"
