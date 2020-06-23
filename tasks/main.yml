@@ -34,7 +34,7 @@
     server_proxy_user: "{{ reg_server_proxy_user | default(omit) }}"
     server_proxy_password: "{{ reg_server_proxy_password | default(omit) }}"
     state: present
-  when: ( subscription_status.stdout != "Subscribed" )
+#  when: ( subscription_status.stdout != "Subscribed" )
 
 - name: Set fix osrelease to "{{ reg_osrelease }}"
   shell: |
