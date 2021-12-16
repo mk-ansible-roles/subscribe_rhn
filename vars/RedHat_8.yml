@@ -1,0 +1,4 @@
+---
+_subscribe_rhn_default_repos:
+      - rhel-8-for-{{ ansible_architecture }}-appstream-rpms
+      - rhel-8-for-{{ ansible_architecture }}-baseos-rpms

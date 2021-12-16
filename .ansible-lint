@@ -1,0 +1,4 @@
+skip_list:
+     - empty-string-compare
+     - indentation
+     - line-length
