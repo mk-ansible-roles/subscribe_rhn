@@ -12,12 +12,12 @@
     - 'role::subscribe_rhn:install'
     - 'role::subscribe_rhn:config'
 
-# - include_tasks: '{{ ansible_distribution }}/installation.yml'
+# - include_tasks: installation.yml
 #  tags:
 #    - 'role::subscribe_rhn'
 #    - 'role::subscribe_rhn:install'
 
-- include_tasks: '{{ ansible_distribution }}/configuration.yml'
+- include_tasks: configuration.yml
   tags:
     - 'role::subscribe_rhn'
     - 'role::subscribe_rhn:config'
