@@ -17,8 +17,8 @@
           #    reg_password:
           #
           # The following are optional
-          reg_server_insecure: yes
-          reg_autosubscribe: yes
+          reg_server_insecure: true
+          reg_autosubscribe: true
           reg_osrelease: 7.4
 
           # Set this variable to true if you want to remove/disable all previously existing repositories. The default is false

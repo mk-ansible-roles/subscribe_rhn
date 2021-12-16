@@ -1,65 +1,23 @@
 ---
 
-- name: Check Subscription Status
-  shell: LANG=C subscription-manager list | awk  ' ( $1 == "Status:" ) { print $2 } ' | sort -u
-  register: subscription_status
-  changed_when: false
+- name: include os specific vars
+  include_vars: '{{ item }}'
+  with_first_found:
+    - '{{ ansible_distribution }}_{{ ansible_distribution_version }}_{{ ansible_architecture }}.yml'
+    - '{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml'
+    - '{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_os_family }}.yml'
+  tags:
+    - 'role::subscribe_rhn'
+    - 'role::subscribe_rhn:install'
+    - 'role::subscribe_rhn:config'
 
-- name: make sure registration credentials are provided
-  fail:
-    msg: "please provide registration credentials for this system"
-  when: ( subscription_status.stdout != "Subscribed" ) and ( ((reg_activation_key is not defined) or (reg_organization_id is not defined)) and ((reg_username is not defined ) or (reg_password is not defined)) )
+# - include_tasks: '{{ ansible_distribution }}/installation.yml'
+#  tags:
+#    - 'role::subscribe_rhn'
+#    - 'role::subscribe_rhn:install'
 
-- name: Ensure credentials are installed for Satellite 6 server  "{{ satellite_server }}"
-  yum:
-    name: "{{ 'http://' +  satellite_server +'/pub/katello-ca-consumer-latest.noarch.rpm' }}"
-    state: present
-    validate_certs: no
-  when: not( (satellite_server is undefined) or (satellite_server is none) or (satellite_server | trim == '') )
-
-- name: ensure system is registered using known activation key
-  redhat_subscription:
-    activationkey: "{{ reg_activation_key | default(omit) }}"
-    org_id: "{{ reg_organization_id | default(omit) }}"
-    pool: "{{ reg_pool | default(omit) }}"
-    pool_ids: "{{ reg_pool_ids | default(omit) }}"
-    server_insecure: "{{ reg_server_insecure | default('no') }}"
-    autosubscribe: "{{ reg_autosubscribe | default(omit) }}"
-    username: "{{ reg_username | default(omit) }}"
-    password: "{{ reg_password | default(omit) }}"
-    server_proxy_hostname: "{{ reg_server_proxy_hostname | default(omit) }}"
-    server_proxy_port: "{{ reg_server_proxy_port | default(omit) }}"
-    server_proxy_user: "{{ reg_server_proxy_user | default(omit) }}"
-    server_proxy_password: "{{ reg_server_proxy_password | default(omit) }}"
-    state: present
-  when: ( subscription_status.stdout != "Subscribed" )
-
-- name: Set fix osrelease to "{{ reg_osrelease }}"
-  shell: |
-    if [ "$( LANG=C subscription-manager release | cut -d' ' -f2 )" != "{{ reg_osrelease }}" ]; then
-          yum clean all
-          subscription-manager release --set={{ reg_osrelease }}
-          yum clean all
-          # workaround to update redhat.repo appropriately
-          subscription-manager repos --list
-    else
-          exit 90
-    fi
-  register: rh_release
-  changed_when: rh_release.rc == 0
-  failed_when: rh_release.rc > 0 and rh_release.rc !=90
-  when:
-    - not( (reg_osrelease is undefined) or (reg_osrelease is none) or (reg_osrelease | trim == '') )
-
-- name: 'Disable all repositories except the required'
-  rhsm_repository:
-    name: "*"
-    state: disabled
-  when: repo_reset
-
-- name: 'repository setup'
-  rhsm_repository:
-    name: "{{ repositories }}"
-    state: enabled
-
-...
+- include_tasks: '{{ ansible_distribution }}/configuration.yml'
+  tags:
+    - 'role::subscribe_rhn'
+    - 'role::subscribe_rhn:config'
