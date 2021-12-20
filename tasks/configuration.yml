@@ -3,7 +3,7 @@
 - name: Check Subscription Status
   shell: |
      set -o pipefail
-     LANG=C subscription-manager list | awk  ' ( $1 == "Status:" ) { print $2 } ' | sort -u
+     LANG=C subscription-manager status | awk  -F: ' ( $1 == "Overall Status" ) { print $2 } ' | tr -d ' '
   register: register_subscription_status
   changed_when: false
 
@@ -34,7 +34,9 @@
     server_proxy_user: "{{ reg_server_proxy_user | default(omit) }}"
     server_proxy_password: "{{ reg_server_proxy_password | default(omit) }}"
     state: present
-  when: ( register_subscription_status.stdout != "Subscribed" )
+  when:
+    - register_subscription_status.stdout != "Current"
+    - register_subscription_status.stdout != "Disabled"
 
 - name: Set fix osrelease to "{{ reg_osrelease }}"
   shell: |
