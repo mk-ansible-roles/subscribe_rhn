@@ -1,11 +1,16 @@
 ---
 
+# Note:
+# If system is not subscribed, status is "Unknown", rc=1
+# If system is subscribed,  status is "Current", rc=0
+# If SCA is enabled, status is "Disabled", rc=0
 - name: Check Subscription Status
   shell: |
      set -o pipefail
      LANG=C subscription-manager status | awk  -F: ' ( $1 == "Overall Status" ) { print $2 } ' | tr -d ' '
   register: register_subscription_status
   changed_when: false
+  failed_when: false
 
 - name: make sure registration credentials are provided
   fail:
