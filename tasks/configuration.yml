@@ -63,6 +63,8 @@
   fail:
     msg: "The previous error cannot be ignored"
   when:
+    - register_subscription_status.stdout != "Current"
+    - register_subscription_status.stdout != "Disabled"
     - register_subscribe_result.rc > 0
     - not ("The system has been registered with ID" in register_subscribe_result.stdout_lines[0])
 
