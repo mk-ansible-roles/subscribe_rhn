@@ -24,6 +24,15 @@
     validate_certs: false
   when: not( (satellite_server is undefined) or (satellite_server is none) or (satellite_server | trim == '') )
 
+- name: Ensure no old invalid credentials are kept on the system
+  command: subscription-manager clean
+  environment:
+          LANG=C
+  when:
+    - register_subscription_status.stdout != "Current"
+    - register_subscription_status.stdout != "Disabled"
+
+
 - name: ensure system is registered using known activation key
   redhat_subscription:
     activationkey: "{{ reg_activation_key | default(omit) }}"
@@ -38,28 +47,39 @@
     server_proxy_port: "{{ reg_server_proxy_port | default(omit) }}"
     server_proxy_user: "{{ reg_server_proxy_user | default(omit) }}"
     server_proxy_password: "{{ reg_server_proxy_password | default(omit) }}"
+    release: "{{ reg_osrelease | default(omit) }}"
     state: present
   when:
     - register_subscription_status.stdout != "Current"
     - register_subscription_status.stdout != "Disabled"
+  ignore_errors: true
+  register: register_subscribe_result
 
-- name: Set fix osrelease to "{{ reg_osrelease }}"
-  shell: |
-    set -o pipefail
-    if [ "$( LANG=C subscription-manager release | cut -d' ' -f2 )" != "{{ reg_osrelease }}" ]; then
-          yum clean all
-          subscription-manager release --set={{ reg_osrelease }}
-          yum clean all
-          # workaround to update redhat.repo appropriately
-          subscription-manager repos --list
-    else
-          exit 90
-    fi
-  register: rh_release
-  changed_when: rh_release.rc == 0
-  failed_when: rh_release.rc > 0 and rh_release.rc !=90
+- name: Ignore certain errors
+  fail:
+    msg: "The previous error cannot be ignored"
   when:
-    - not( (reg_osrelease is undefined) or (reg_osrelease is none) or (reg_osrelease | trim == '') )
+    - register_subscribe_result.rc > 0
+    - not ("The system has been registered with ID" in register_subscribe_result.stdout_lines[0])
+
+# The next task is now included in redhat_subscription
+# - name: Set fix osrelease to "{{ reg_osrelease }}"
+##  shell: |
+##    set -o pipefail
+##    if [ "$( LANG=C subscription-manager release | cut -d' ' -f2 )" != "{{ reg_osrelease }}" ]; then
+##          yum clean all
+##          subscription-manager release --set={{ reg_osrelease }}
+##          yum clean all
+##          # workaround to update redhat.repo appropriately
+##         subscription-manager repos --list
+##    else
+##          exit 90
+##    fi
+##  register: rh_release
+##  changed_when: rh_release.rc == 0
+##  failed_when: rh_release.rc > 0 and rh_release.rc !=90
+##  when:
+##    - not( (reg_osrelease is undefined) or (reg_osrelease is none) or (reg_osrelease | trim == '') )
 
 - name: 'Disable all repositories except the required'
   rhsm_repository:
