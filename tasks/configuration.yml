@@ -55,6 +55,10 @@
   ignore_errors: true
   register: register_subscribe_result
 
+- name: Display Result
+  debug:
+    var: register_subscribe_result
+
 - name: Ignore certain errors
   fail:
     msg: "The previous error cannot be ignored"
