@@ -65,7 +65,7 @@
   when:
     - register_subscription_status.stdout != "Current"
     - register_subscription_status.stdout != "Disabled"
-    - register_subscribe_result.rc > 0
+    - register_subscribe_result.failed
     - not ("The system has been registered with ID" in register_subscribe_result.stdout_lines[0])
 
 # The next task is now included in redhat_subscription
