@@ -68,27 +68,6 @@
     - register_subscribe_result.failed
     - not ("The system has been registered with ID" in register_subscribe_result.stdout_lines[0])
 
-#  - not ( register_subscribe_result.failed is undefined )
-
-# The next task is now included in redhat_subscription
-# - name: Set fix osrelease to "{{ reg_osrelease }}"
-##  shell: |
-##    set -o pipefail
-##    if [ "$( LANG=C subscription-manager release | cut -d' ' -f2 )" != "{{ reg_osrelease }}" ]; then
-##          yum clean all
-##          subscription-manager release --set={{ reg_osrelease }}
-##          yum clean all
-##          # workaround to update redhat.repo appropriately
-##         subscription-manager repos --list
-##    else
-##          exit 90
-##    fi
-##  register: rh_release
-##  changed_when: rh_release.rc == 0
-##  failed_when: rh_release.rc > 0 and rh_release.rc !=90
-##  when:
-##    - not( (reg_osrelease is undefined) or (reg_osrelease is none) or (reg_osrelease | trim == '') )
-
 - name: 'Disable all repositories except the required'
   rhsm_repository:
     name: "*"
