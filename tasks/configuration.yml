@@ -12,14 +12,17 @@
   changed_when: false
   failed_when: false
 
-- name: make sure registration credentials are provided
+- name: Make sure registration credentials are provided
   fail:
     msg: "please provide registration credentials for this system"
-  when: ( register_subscription_status.stdout != "Subscribed" ) and ( ((reg_activation_key is not defined) or (reg_organization_id is not defined)) and ((reg_username is not defined ) or (reg_password is not defined)) )
+  when: >
+    ( register_subscription_status.stdout != "Subscribed" ) and
+    ( ((reg_activation_key is not defined) or (reg_organization_id is not defined)) and
+    ((reg_username is not defined ) or (reg_password is not defined)) )
 
-- name: Ensure credentials are installed for Satellite 6 server  "{{ satellite_server }}"
+- name: "Ensure credentials are installed for Satellite 6 server {{ satellite_server }}"
   yum:
-    name: "{{ 'http://' +  satellite_server +'/pub/katello-ca-consumer-latest.noarch.rpm' }}"
+    name: "{{ 'http://' + satellite_server + '/pub/katello-ca-consumer-latest.noarch.rpm' }}"
     state: present
     validate_certs: false
   when: not( (satellite_server is undefined) or (satellite_server is none) or (satellite_server | trim == '') )
@@ -28,7 +31,7 @@
   command: subscription-manager unregister
   failed_when: false
   environment:
-          LANG: C
+    LANG: C
   when:
     - register_subscription_status.stdout != "Current"
     - register_subscription_status.stdout != "Disabled"
@@ -36,13 +39,13 @@
 - name: Ensure no old invalid credentials are kept on the system
   command: subscription-manager clean
   environment:
-          LANG: C
+    LANG: C
   when:
     - register_subscription_status.stdout != "Current"
     - register_subscription_status.stdout != "Disabled"
 
 
-- name: ensure system is registered using known activation key
+- name: Ensure system is registered using known activation key
   redhat_subscription:
     activationkey: "{{ reg_activation_key | default(omit) }}"
     org_id: "{{ reg_organization_id | default(omit) }}"
@@ -77,12 +80,13 @@
     - register_subscribe_result.failed
     - not ("The system has been registered with ID" in register_subscribe_result.stdout_lines[0])
 
-- name: ensure system relase is locked if required
+- name: Ensure system relase is locked if required
   block:
 
     - name: Get current release
       command: subscription-manager release
       register: register_current_os_release
+      changed_when: false
 
     - name: Set required OS release
       command: subscription-manager release --set "{{ reg_osrelease }}"
@@ -91,15 +95,24 @@
   when:
     - reg_osrelease is defined
 
+- name: 'Disable all yum-repositories'
+  yum_repository:
+    name: '*'
+    state: absent
+  notify: Yum-clean-metadata
+  when: repo_reset
+
 - name: 'Disable all repositories except the required'
   rhsm_repository:
     name: "*"
     state: disabled
+  notify: Yum-clean-metadata
   when: repo_reset
 
-- name: 'repository setup'
+- name: 'Repository Setup'
   rhsm_repository:
     name: "{{ repositories }}"
     state: enabled
+  notify: Yum-clean-metadata
 
 ...

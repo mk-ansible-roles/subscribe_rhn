@@ -29,4 +29,4 @@
                   - rhel-sap-hana-for-rhel-7-server-rpms
 
   roles:
-    - subscribe-rhn
+          - subscribe-rhn

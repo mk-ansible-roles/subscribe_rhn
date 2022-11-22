@@ -1,12 +1,14 @@
 galaxy_info:
   author: Markus Koch
   description: subscribe against Satellite 6 or RHN
-  version: 0.2
+  role_name: subscribe_rhn
+  namespace: mk_ansible_roles
+  version: 0.3
   license: Apache 2.0
   min_ansible_version: 2.9
   platforms:
-  - name: EL
-    versions: [7, 8]
+    - name: EL
+      versions: [7, 8]
 
   galaxy_tags: ['system', 'subscriptionmanager', 'beta']
 

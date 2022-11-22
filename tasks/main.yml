@@ -1,6 +1,6 @@
 ---
 
-- name: include os specific vars
+- name: Include os specific vars
   include_vars: '{{ item }}'
   with_first_found:
     - '{{ ansible_distribution }}_{{ ansible_distribution_version }}_{{ ansible_architecture }}.yml'
@@ -17,7 +17,8 @@
 #    - 'role::subscribe_rhn'
 #    - 'role::subscribe_rhn:install'
 
-- include_tasks: configuration.yml
+- name: Run configuration tasks
+  include_tasks: configuration.yml
   tags:
     - 'role::subscribe_rhn'
     - 'role::subscribe_rhn:config'

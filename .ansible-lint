@@ -1,4 +1,8 @@
 skip_list:
+     - experimental
+     - role-name
      - empty-string-compare
      - indentation
      - line-length
+     - ignore_errors
+     - fqcn

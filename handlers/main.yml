@@ -1,0 +1,5 @@
+---
+- name: Yum-clean-metadata
+  ansible.builtin.command: yum clean metadata
+  args:
+    warn: false
