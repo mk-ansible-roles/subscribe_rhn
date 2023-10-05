@@ -5,7 +5,7 @@
 # If system is subscribed,  status is "Current", rc=0
 # If SCA is enabled, status is "Disabled", rc=0
 - name: Check Subscription Status
-  shell: |
+  ansible.builtin.shell: |
      set -o pipefail
      LANG=C subscription-manager status | awk  -F: ' ( $1 == "Overall Status" ) { print $2 } ' | tr -d ' '
   register: register_subscription_status
@@ -13,7 +13,7 @@
   failed_when: false
 
 - name: Make sure registration credentials are provided
-  fail:
+  ansible.builtin.fail:
     msg: "please provide registration credentials for this system"
   when: >
     ( register_subscription_status.stdout != "Subscribed" ) and
@@ -21,14 +21,14 @@
     ((reg_username is not defined ) or (reg_password is not defined)) )
 
 - name: "Ensure credentials are installed for Satellite 6 server {{ satellite_server }}"
-  yum:
+  ansible.builtin.yum:
     name: "{{ 'http://' + satellite_server + '/pub/katello-ca-consumer-latest.noarch.rpm' }}"
     state: present
     validate_certs: false
   when: not( (satellite_server is undefined) or (satellite_server is none) or (satellite_server | trim == '') )
 
 - name: Ensure no old invalid credentials are kept on the RHSM server
-  command: subscription-manager unregister
+  ansible.builtin.command: subscription-manager unregister
   failed_when: false
   environment:
     LANG: C
@@ -37,7 +37,7 @@
     - register_subscription_status.stdout != "Disabled"
 
 - name: Ensure no old invalid credentials are kept on the system
-  command: subscription-manager clean
+  ansible.builtin.command: subscription-manager clean
   environment:
     LANG: C
   when:
@@ -46,7 +46,7 @@
 
 
 - name: Ensure system is registered using known activation key
-  redhat_subscription:
+  community.general.redhat_subscription:
     activationkey: "{{ reg_activation_key | default(omit) }}"
     org_id: "{{ reg_organization_id | default(omit) }}"
     pool: "{{ reg_pool | default(omit) }}"
